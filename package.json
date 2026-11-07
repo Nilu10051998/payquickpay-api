@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
+    "https-proxy-agent": "^7.0.0",
     "undici": "^6.0.0"
   }
 }
