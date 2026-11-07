@@ -1,3 +1,5 @@
+import { ProxyAgent } from 'undici';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,9 +11,14 @@ export default async function handler(req, res) {
 
   const A1_USER = process.env.A1_USER;
   const A1_PWD = process.env.A1_PWD;
+  const PROXY_URL = process.env.PROXY_URL;
 
   if (!A1_USER || !A1_PWD) {
     return res.status(200).json({ status: 'Failed', message: 'A1_USER / A1_PWD payquickpay-api project re set heini.' });
+  }
+
+  if (!PROXY_URL) {
+    return res.status(200).json({ status: 'Failed', message: 'PROXY_URL set heini payquickpay-api re' });
   }
 
   if (!number || !operatorcode || !amount) {
@@ -19,10 +26,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    // *** PROXY - Ebe request tuma 109... IP ru jiba ***
+    const proxy = new ProxyAgent(PROXY_URL);
+
     // *** THIK URL - business.a1topup.com ***
     const url = `https://business.a1topup.com/recharge/api?username=${encodeURIComponent(A1_USER)}&pwd=${encodeURIComponent(A1_PWD)}&circlecode=0&operatorcode=${encodeURIComponent(operatorcode)}&number=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}&orderid=${encodeURIComponent(orderid || 'PQ' + Date.now())}&format=json`;
 
-    const r = await fetch(url);
+    const r = await fetch(url, { dispatcher: proxy });
     const text = await r.text();
     console.log('A1 RAW:', text.slice(0, 500));
 
