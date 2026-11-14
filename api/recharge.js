@@ -8,7 +8,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    // POST hele body ru, GET hele query ru - duita kam kariba
     const src = req.method === 'POST' ? (req.body || {}) : (req.query || {});
     const { number, amount, operatorcode, circlecode, orderid } = src;
 
@@ -20,8 +19,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: 'Failed', message: 'Missing number / operator / amount' });
     }
 
-    const finalOrderId = orderid || 'PQ' + Date.now();
-    const url = `https://business.a1topup.com/recharge/api?username=${encodeURIComponent(username)}&pwd=${encodeURIComponent(pwd)}&circlecode=${circlecode || 0}&operatorcode=${encodeURIComponent(operatorcode)}&number=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}&orderid=${encodeURIComponent(finalOrderId)}&format=json`;
+    // FIX 1: Circle Code - Odisha = 23, 0 nuhen
+    const finalCircle = circlecode || 23;
+    // FIX 2: Order ID - Khali Number, PQ nuhen
+    const finalOrderId = (orderid || String(Date.now())).replace(/[^0-9]/g, '').slice(-12) || String(Date.now());
+
+    const url = `https://business.a1topup.com/recharge/api?username=${encodeURIComponent(username)}&pwd=${encodeURIComponent(pwd)}&circlecode=${finalCircle}&operatorcode=${encodeURIComponent(operatorcode)}&number=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}&orderid=${encodeURIComponent(finalOrderId)}&format=json`;
 
     const agent = proxy ? new HttpsProxyAgent(proxy) : undefined;
 
